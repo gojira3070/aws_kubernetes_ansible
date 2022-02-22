@@ -1,0 +1,76 @@
+- name: "install de package"
+  apt:
+   name: "{{ item }}"
+   update_cache: yes
+   state: latest
+  with_items:
+    - python3-boto
+    - python3-boto3
+    - python3
+    - python3-pip
+
+- name: update
+  apt: 
+    name: "*"
+    state: latest
+    update_cache: yes
+
+#- name: pip update
+#  shell:
+#    cmd: pip3 install -U python3-boto
+
+- name: create key pair using key_material obtained using 'file' lookup plugin
+  ec2_key:
+    aws_access_key: "--REMOVED--"
+    aws_secret_key: "--REMOVED--"
+    region: --REMOVED--
+    name: my_keypair2
+    force: yes
+    #key_material: "{{ lookup('file', '/etc/ansible/roles/aws/tasks/mykey.pub') }}"
+  register: ec2_key
+
+- name: debug key
+  debug: 
+    msg: "{{ec2_key}}"
+
+- name: Save private key (PEM file)
+  copy: content="{{ec2_key.key.private_key}}" dest=/etc/ansible/my_keypair2.pem mode=0600
+  when: ec2_key.changed
+
+
+- ec2:
+    key_name: my_keypair2
+    region: eu-west-1 
+    instance_type: t2.medium
+    instance_tags:
+        Name: Ec2_create_via_ansible_master_kubernetes
+        Date: 2022/02/20
+    image: ami-0c7625fcaabee0286
+    wait: yes
+    group_id: sg-0033ea4c3901becbb
+    count: 1
+    vpc_subnet_id: subnet-5a1f1212
+    assign_public_ip: yes
+  register: ec2
+   
+- ec2:
+    key_name: my_keypair2
+    region: eu-west-1
+    instance_type: t2.medium
+    instance_tags:
+        Name: Ec2_create_via_ansible_client_kubernetes
+        Date: 2022/02/20
+    image: ami-0c7625fcaabee0286
+    wait: yes
+    group_id: sg-0033ea4c3901becbb
+    count: 1
+    vpc_subnet_id: subnet-5a1f1212
+    assign_public_ip: yes
+  register: ec2
+
+- name: Save IP to inventory file
+  lineinfile:
+    dest: "/etc/ansible/hosts"
+    insertafter: '\[webservers\]'
+    line: "{{item.public_ip}}"
+  with_items: "{{ec2.instances}}"

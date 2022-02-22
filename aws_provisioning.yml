@@ -1,0 +1,15 @@
+---
+- name: "install et lancement de deux instances ec2"
+  hosts: localhost
+  connection: local
+  become: true
+  module_defaults:
+    group/aws:
+      aws_access_key: "--REMOVED--" 
+#'{{ aws_access_key }}'
+      aws_secret_key: "--REMOVED--" 
+#'{{ aws_secret_key }}'
+      region: REMOVED
+
+  roles:
+    - aws

@@ -1,0 +1,11 @@
+- name: "install de kubernetes"
+  hosts: all
+  remote_user: ubuntu
+  gather_facts: False
+  become: true
+  vars:
+    docker_compose_dir: /home/ubuntu/
+  
+  roles :
+    - tools_docker
+    - kubernetes

@@ -1,0 +1,38 @@
+---
+#tasks file for kubernetes
+- name: Update les packages
+  apt:
+   name: "*"
+   state: latest
+   update_cache: yes
+   force_apt_get: yes
+
+- name: Install packages
+  apt:
+   name: "{{ Packages }}"
+   state: present
+  vars:
+   Packages:
+   - curl
+   - apt-transport-https
+
+- name: Depot
+  shell: curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+
+#- name: add repo
+#  shell: add-apt-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+
+- name: Add Kubernetes Repository
+  apt_repository:
+   repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+   state: present
+
+- name: Install packages
+  apt:
+   name: "{{ Packages }}"
+   state: present
+  vars:
+   Packages:
+   - kubelet
+   - kubeadm
+   - kubernetes-cni
